@@ -1,13 +1,22 @@
+// Replace this file content
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const crypto = require('crypto'); // Use Node's built-in crypto instead of bcrypt
 
 // Secret key for JWT (in production, this would be in environment variables)
 const JWT_SECRET = 'jenkins-tracker-secret-key';
 
 // In-memory user storage (would be replaced with database in production)
 let users = [];
+
+// Function to hash password with crypto
+function hashPassword(password) {
+  return crypto
+    .createHash('sha256')
+    .update(password)
+    .digest('hex');
+}
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -23,8 +32,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password with crypto
+    const hashedPassword = hashPassword(password);
     
     // Create new user
     const newUser = {
@@ -74,8 +83,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Check password using crypto
+    const hashedPassword = hashPassword(password);
+    const isPasswordValid = hashedPassword === user.password;
     
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
